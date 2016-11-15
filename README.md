@@ -85,3 +85,42 @@ int main()
   source();
 }
 ```
+
+[Пример 51.2](example512) похож на предыдущий. На этот раз ***boost::coroutines::coroutine*** инициализирована типом ***int***. Это позволяет возвращать ***int*** из сопрограммы.
+
+Направление, в котором ***int*** передается, зависит от где использованы ***pull_type*** и ***push_type***. Пример использует ***pull_type***, чтобы инициализировать объект в ***main()***. у ***cooperative()*** есть доступ к объекту типа ***push_type***. ***push_type*** отправляет значение, и ***pull_type*** принимает значение; таким образом определяется направление передачи данных.
+
+***cooperative()*** вызывает ***sink*** с параметром типа ***int***. Этот параметр требуется, что бы сопрограмма инициализировалась с типом ***int***. Значение, переданное в ***sink***, получено от ***source*** в ***main()*** при помощи члена-функции, ***get()***, являющейся методом ***pull_type***.
+
+[Пример 51.2](example512) также иллюстрирует, как функция с несколькими параметрами может использоваться в качестве сопрограммы. у ***cooperative()*** есть дополнительный параметр типа ***int***, который не может быть передан непосредственно конструктору ***pull_type***. Пример использует ***std::bind()***, чтобы соединить функцию с ***pull_type***.
+
+Пример пишет ***1***, ***2*** и в конце ***end*** в стандартный поток вывода.
+
+`Пример 51.3. Передача двух значений в сопрограмму.`
+<a name="example513"></a>
+```c++
+#include <boost/coroutine/all.hpp>
+#include <tuple>
+#include <string>
+#include <iostream>
+
+using boost::coroutines::coroutine;
+
+void cooperative(coroutine<std::tuple<int, std::string>>::pull_type &source)
+{
+  auto args = source.get();
+  std::cout << std::get<0>(args) << " " << std::get<1>(args) << '\n';
+  source();
+  args = source.get();
+  std::cout << std::get<0>(args) << " " << std::get<1>(args) << '\n';
+}
+
+int main()
+{
+  coroutine<std::tuple<int, std::string>>::push_type sink{cooperative};
+  sink(std::make_tuple(0, "aaa"));
+  sink(std::make_tuple(1, "bbb"));
+  std::cout << "end\n";
+}
+```
+
